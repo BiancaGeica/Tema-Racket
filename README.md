@@ -1,10 +1,10 @@
-# Supermarket Queue Simulator 🛒
+# Supermarket Queue Simulator 
 
 Acest proiect este o aplicație dezvoltată în **Racket**, bazată exclusiv pe **programare funcțională** (fără efecte laterale sau variabile mutabile). Aplicația simulează fluxul clienților la casele de marcat dintr-un magazin, gestionând dinamic cozile, timpul de așteptare și optimizarea resurselor.
 
 Proiectul a fost dezvoltat iterativ, în 4 etape, complexitatea crescând treptat de la manipulări de bază ale listelor până la implementarea unor Tipuri de Date Abstracte (TDA) optimizate cu fluxuri (streams) și evaluare leneșă.
 
-## 🛠 Tehnologii și Concepte Utilizate
+## Tehnologii și Concepte Utilizate
 * **Limbaj:** Racket (Lisp dialect)
 * **Paradigmă:** Programare Funcțională pură
 * **Concepte cheie:**
@@ -14,7 +14,7 @@ Proiectul a fost dezvoltat iterativ, în 4 etape, complexitatea crescând trepta
   * Evaluare leneșă (Lazy Evaluation) și Fluxuri (Streams)
   * Pattern Matching
 
-## 🚀 Evoluția Proiectului (Etape de dezvoltare)
+## Evoluția Proiectului (Etape de dezvoltare)
 
 ### Etapa 1: Fundamentele
 * Implementarea structurilor de bază pentru casele de marcat (`counter`), având un timp total de așteptare (`tt`) și o coadă de clienți (`queue`).
