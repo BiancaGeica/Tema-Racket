@@ -118,7 +118,7 @@
 ;  - min-tt și min-et vor fi aplicații parțiale ale funcției abstracte.
 
 (define (fancy-minim-tt-et placeholder)
-  (λ(counters)
+  (λ(counters) ;lista de case o dau cand o sa apelez minim-tt si minim-et
     (foldl (λ (counter minim)
              (cond ((< (placeholder counter) (cdr minim))
                     (cons (counter-index counter) (placeholder counter)))
@@ -128,13 +128,13 @@
                         (cons (counter-index counter) (placeholder counter))
                         minim))
                    (else minim)))
-           (cons (counter-index (car counters)) (placeholder (car counters))) 
-           (cdr counters)))) 
+           (cons (counter-index (car counters)) (placeholder (car counters))) ;acumulatorul pentru fold, prima casa din lista
+           (cdr counters)))) ;restul listei pe care se aplica foldl
 
 (define min-tt
-  (fancy-minim-tt-et counter-tt))
+  (fancy-minim-tt-et counter-tt)) ; folosind funcția de mai sus
 (define min-et
-  (fancy-minim-tt-et counter-et))
+  (fancy-minim-tt-et counter-et))  ; folosind funcția de mai sus
 
 
 ; TODO 7 (10p)
@@ -150,6 +150,7 @@
 (define (remove-first-from-counter C)
   (if (null? (cdr (counter-queue C)))
       (make-counter (counter-index C) 0 0 (cdr (counter-queue C)))
+      ;(make-counter (counter-index C) (tt+ (cdr (counter-queue C))) (cdr (cdr (counter-queue C))) (cdr (counter-queue C)))))
       (make-counter (counter-index C) (- (counter-tt C) (counter-et C)) (cdr (car (cdr (counter-queue C)))) (cdr (counter-queue C))))); et contine si timpul de procesare al primului client, dar si intarzierea
 
 ; TODO 8 (50p)
@@ -186,10 +187,13 @@
 ;  - Nu apelați checker-tt+, checker-et+, checker-add-to-counter,
 ;    ci doar tt+, et+, add-to-counter. (3*5p) 
 (define (serve requests fast-counters slow-counters)
+  ;(define (helper-delay C)
+  ;  (make-counter (counter-index C) ((tt+ C) minutes) ((et+ C) minutes) (counter-queue C))) nu merge sa il pun aici, minutes nu a fost inca declarat si da eroare
   (define (number-of-counters)
     (+ (length fast-counters) (length slow-counters)))
 
   (define (sum-tt)
+    ;(foldl + 0 (map number-of-counters (append fast-counters slow-counters)))) avem nevoie de parametrii, iar number-of-counters nu primeste nimic, + am nevoie de tt, nu de cate case sunt
     (foldl + 0 (map counter-tt (append fast-counters slow-counters))))
 
   (define (do-we-have-clients C)
@@ -198,11 +202,17 @@
   (if (null? requests)
       (append fast-counters slow-counters) ;daca nu am/mai am request-uri, returnez casele asa cum sunt
       (match (car requests)
-        [(list 'delay index minutes)
+        [(list 'delay index minutes) ;(make-counter index ((tt+ index) minutes) ((et+ index) minutes) (counter-queue index))]
+         ;(if (<= index 3) (update ((tt+ index) minutes) fast-counters index) doar in exemplul de pe ocw am sigur 2 case rapide, altfel pot sa am oricate
+         ;(update ((tt+ index) minutes) fast-counters index) TRAAAAAASH
+         ;(update ((tt+ index) minutes) slow-counters index)] nu merge asa, iar am pierdut apelul recursiv
          (serve (cdr requests) (update (λ(C) ((tt+ ((et+ C) minutes)) minutes)) fast-counters index) (update (λ(C) ((tt+ ((et+ C) minutes)) minutes)) slow-counters index))]
   
         [(list 'remove-first) (if (and (null? (filter do-we-have-clients fast-counters)) (null? (filter do-we-have-clients slow-counters)))
                                   (serve (cdr requests) fast-counters slow-counters) ;daca nu avem clienti, nu avem ce scoate asa ca trecem la cererea urmatoare
+                                  ;(if (< (cdr (min-et fast-counters)) (cdr (min-et slow-counters)))
+                                  ;    (serve (cdr requests) (update remove-first-from-counter fast-counters (car (min-et fast-counters))) slow-counters)
+                                  ;    (serve (cdr requests) fast-counters (update remove-first-from-counter slow-counters (car (min-et slow-counters))))))]
                                   (if (or (null? (filter do-we-have-clients slow-counters))
                                           (and (not (null? (filter do-we-have-clients fast-counters)))
                                                (<= (cdr (min-et (filter do-we-have-clients fast-counters)))
@@ -218,10 +228,14 @@
                                     (serve requests fast-counters (append slow-counters (list (empty-counter (+ (number-of-counters) 1))))) ;indexul noului counter va fi nr de countere + 1
                                     (serve (cdr requests) fast-counters slow-counters))]
         
-        [(list name n-items) 
+        [(list name n-items) ;(if (< n-items ITEMS) ((add-to-counter (car (min-tt fast-counters)) name) n-items)
+         ;    ((add-to-counter (car (min-tt slow-counters)) name) n-items))] nu merge asa, daca casele rapide au un tt mai mare decat cele lente nu respect cerinta si trimit clientul la o casa cu un tt mai mare
          (if (<= n-items ITEMS) (if (<= (cdr (min-tt fast-counters)) (cdr (min-tt slow-counters)))
+                                    ;((add-to-counter (car (min-tt fast-counters)) name) n-items) chestia asta doar calculeaza fara sa mai apeleze iar functia pentru apelul recursiv, calculeaza si nu face nimic dupa
                                     (serve (cdr requests) (update (λ (C) (((add-to-counter C) name) n-items)) fast-counters (car (min-tt fast-counters))) slow-counters)
+                                    ;((add-to-counter (car (min-tt slow-counters)) name) n-items))
                                     (serve (cdr requests) fast-counters (update (λ (C) (((add-to-counter C) name) n-items)) slow-counters (car (min-tt slow-counters)))))
+             ;(serve (cdr requests) fast-counters (update ((add-to-counter name) n-items) slow-counters (car (min-tt slow-counters)))))]
              (serve (cdr requests) fast-counters (update (λ (C) (((add-to-counter C) name) n-items)) slow-counters (car (min-tt slow-counters)))))])))
 
 

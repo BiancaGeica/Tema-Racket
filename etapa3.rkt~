@@ -82,6 +82,12 @@
 ; La casele fără clienți, este responsabilitatea
 ; voastră să nu produceți timpi negativi.
 (define ((pass-time-through-counter minutes) C)
+  ;(if (and (zero? (counter-tt C)) (zero? (counter-et C)))
+  ;    (make-counter (counter-index C) (counter-tt C) (counter-et C) (counter-queue C))
+  ;    (if (or (< (- (counter-tt C) minutes) 0) (< (- (counter-et C) minutes) 0))
+  ;(make-counter (counter-index C) 0 0 (counter-queue C)) cand tt>0 si et=0 se seteaza tot la 0 si nu este ok
+  ;        (make-counter (counter-index C) (max 0 (- (counter-tt C) minutes)) (max 0 (- (counter-et C) minutes)) (counter-queue C))
+  ;        (make-counter (counter-index C) (- (counter-et C) minutes) (- (counter-et C) minutes) (counter-queue C)))))
   (make-counter (counter-index C)
                 (max 0 (- (counter-tt C) minutes))
                 (max 0 (- (counter-et C) minutes))
@@ -122,17 +128,25 @@
 ;  - Folosiți minim un let și un let* (care nu ar putea fi let). (2*5p)
 ;  - Respectați "bariera de abstractizare" oricând operați cu tipul queue.
 (define (serve requests fast-counters slow-counters)
+  ;(define (number-of-counters)
+  ;  (+ (length fast-counters) (length slow-counters))) ;total number of counters(fast+slow)
+  ;nu merge sa copiez direct din partea 2 pentru ca aici apelez recursiv si tot timpul imi raman fast-counters si slow-counters initiale
+  
   (define (sum-tt) 
     (foldl + 0 (map counter-tt (append fast-counters slow-counters)))) ;total sum of total times (of all counters)
+  ;extragem tt din toate casele, si facem suma totala a timpilor totali
 
   (define (do-we-have-clients C)
+    ;(not (null? (counter-queue C)))) acum avem queue, nu mai merge sa verific doar daca e null
     (not (queue-empty? (counter-queue C)))) ;returnam true daca casa este goala si false daca are clienti
 
-  (define (min-et-fara-case-goale lista-case)
+  (define (min-et-fara-case-goale lista-case) ;nu am mai folosit-o, dar calculeaza et minim al tuturor caselor care AU clienti, ignorand casele fara clienti
+    ;(if (and (> (counter-et C) 0) (< (counter-et C) ??? <- aici mi-ar fi trebuit minimul caselor pana in momentul asta
     (let ((case-folosite (filter do-we-have-clients lista-case)))
       (min-et case-folosite)))
 
   (let procesare ((requests requests) (case-rapide fast-counters) (case-lente slow-counters) (clienti-plecati-total '()))
+    ;folosit pentru apelul recursiv, aici initializez
 
     (if (null? requests) ;daca nu avem/ nu *mai* avem clienti (cazul de baza al lui procesare)
         (cons clienti-plecati-total (append case-rapide case-lente)) ;returnam clientii plecati + lista tuturor caselor in starea finala
@@ -151,9 +165,16 @@
                                                    (update remove-first-from-counter case-lente id-case)
                                                    clienti-plecati-total))))] ;actualizam lista de case   
           [(list 'ensure average)
+           ; (let ((total (+ (length case-rapide) (length case-lente))))
+           ;(if (> (/ (sum-tt) (number-of-counters)) average)
+           ;(procesare (cdr requests) case-rapide (append case-lente (list (empty-counter (+ (number-of-counters) 1)))) clienti-plecati-total)
+           ;(procesare (cdr requests) case-rapide case-lente clienti-plecati-total))]
+
            (let* ((number-of-counters (+ (length case-rapide) (length case-lente))) 
                   (sum-tt (foldl + 0 (map counter-tt (append case-rapide case-lente))))) ;la fel ca la number-of-counters, nu merge pe recursiv varianta din etapa 2
              (if (> (/ sum-tt number-of-counters) average)
+                 ;(procesare (cdr requests) case-rapide (append case-lente (list (empty-counter (+ number-of-counters 1)))) clienti-plecati-total) nu putem trece la cererea urmatoare pana nu rezolvam recursiv tot din cererea asta
+                 ;(procesare (cdr requests) case-rapide case-lente clienti-plecati-total)))]
                  (procesare requests case-rapide (append case-lente (list (empty-counter (+ number-of-counters 1)))) clienti-plecati-total)
                  (procesare (cdr requests) case-rapide case-lente clienti-plecati-total)))]
           [(list name n-items)
@@ -161,6 +182,9 @@
                                       (procesare (cdr requests) (update (add-to-counter name n-items) case-rapide (car (min-tt case-rapide))) case-lente clienti-plecati-total)
                                       (procesare (cdr requests) case-rapide (update (add-to-counter name n-items) case-lente (car (min-tt case-lente))) clienti-plecati-total))
                (procesare (cdr requests) case-rapide (update (add-to-counter name n-items) case-lente (car (min-tt case-lente))) clienti-plecati-total))]
+          ;(let-values (( (output 1...output n) (functie input 1...input n) )) ...operatii de unde ies outputurile...)
+          ;nu exista un named let-values :(
+          ;[(list x)  (let-values actualizare-recurenta ((timp-minim (cdr (min-et (filter ;;;;X NU ESTE LISTAAAAAAAAA                                  
           [x (let ((rezultat-simulare ;asta folosesc pentru a returna ce am nevoie
                     (let actualizare-recurenta ((timp-ramas x) (cr case-rapide) (cl case-lente) (clienti '())) ;"initializez" variabilele pe care trebuie sa le folosesc in functie
                       (let ((case-cu-clienti (filter do-we-have-clients (append cr cl)))) ;imi salvez casele cu clienti

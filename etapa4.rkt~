@@ -116,7 +116,8 @@
 
     (define (functie-extragere-clienti q)
       (if (queue-empty? q)
-          '() 
+          '() ;vreau sa returneze o lista pentru a lipi-o de restul de request-uri
+          ;(dequeue q))) vreau sa fie lista sa o lipesc de cereri
           (let extrage ((coada-actualizata (dequeue q)))
             (if (queue-empty? coada-actualizata)
                 '() ;cazul de baza, nu exista un al doilea client in coada / am terminat de adaugat in lista toti clientii
@@ -182,6 +183,10 @@
 
 
             [(list name n-items)
+             ;(if (<= n-items ITEMS) (if (<= (cdr (min-tt case-rapide)) (cdr (min-tt case-lente)))
+             ;                           (procesare (cdr requests) (update (add-to-counter name n-items) case-rapide (car (min-tt case-rapide))) case-lente clienti-plecati-total case-inchise)
+             ;                           (procesare (cdr requests) case-rapide (update (add-to-counter name n-items) case-lente (car (min-tt case-lente))) clienti-plecati-total case-inchise))
+             ;exista situatii cand incercam sa facem min-tt pe liste vide si crapa
              (let ((casa-potrivita (if (<= n-items ITEMS)
                                        (car (min-tt (append case-rapide case-lente)))
                                        (car (min-tt case-lente)))))

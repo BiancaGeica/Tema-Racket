@@ -104,6 +104,7 @@
 ; sfârșitul unei cozi. Întoarceți coada actualizată.
 ; Atenție: în urma adăugării, poate fi necesară o rotație!
 (define (enqueue x q)
+  ;(if (<= (queue-size-l q) (queue-size-r q))
   (if (< (queue-size-l q) (+ (queue-size-r q) 1))
       (make-queue (rotate (queue-left q) (cons x (queue-right q)) empty-stream) '() (add1 (+ (queue-size-l q) (queue-size-r q))) 0)
       (make-queue (queue-left q) (cons x (queue-right q)) (queue-size-l q) (+ (queue-size-r q) 1))))
